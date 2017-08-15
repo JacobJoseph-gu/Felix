@@ -351,7 +351,7 @@ contains
   !---------------------------------------------------------------------  
 
   ! compare start time to current and print time-passed
-  SUBROUTINE print_end_time( msg_priority, istart_time, completed_task_name )
+  subroutine print_end_time( msg_priority, istart_time, completed_task_name )
     type (msg_priorities), intent(in) :: msg_priority
     character(*), intent(in) :: completed_task_name
     integer(IKIND), intent(in) :: istart_time
@@ -369,7 +369,7 @@ contains
           "completed in ",ihours," hrs ",iminutes," mins ",iseconds," sec"
     call message_only2(msg_priority,trim(string))
     !?? currently message can't print the combined 3 integers and strings directly
-  END SUBROUTINE print_end_time
+  end subroutine print_end_time
 
   !   EXAMPLE USAGE - use intrinisic system_clock(), 'IStartTime2' local variable 
   !
@@ -380,6 +380,150 @@ contains
   !
   !   EXAMPLE TERMINAL OUTPUT:
   !   @ ---- Absorption completed in   0 hrs  0 mins  2 sec
+
+  !---------------------------------------------------------------------
+  ! prototype print_scaled_cmatrix()
+  !---------------------------------------------------------------------
+
+  subroutine print_scaled_cmatrix ( msg_priority, msg_tag, main_msg, cmatrix )
+
+    type (msg_priorities), intent(in) :: msg_priority
+    type (msg_tags), intent(in) :: msg_tag
+    character(*), intent(in) :: main_msg
+    complex(CKIND), intent(in) :: cmatrix(:,:) 
+    complex(CKIND) :: scaled_matrix(size(cmatrix,1), size(cmatrix,2))       
+    character(50) :: row_format, complex_format, scaled_by_string
+    integer(IKIND) :: i
+    real(RKIND) ::  abs_matrix(size(cmatrix,1), 2 * size(cmatrix,2)), &
+                    log_matrix(size(cmatrix,1), 2 * size(cmatrix,2))
+
+    if ( ( my_rank==0 .or. l_print_this_core ) &
+    .and. (msg_priority%state .or. msg_tag%state) ) then
+
+      abs_matrix(1:size(cmatrix,1), 1:size(cmatrix,2)) = abs(realpart(cmatrix))
+      abs_matrix(1:size(cmatrix,1),size(cmatrix,2)+1:size(cmatrix,2)*2) = abs(imagpart(cmatrix))
+      log_matrix = log10(abs_matrix)
+      where ( abs_matrix < tiny ) !?? JR using RKIND for CKIND should be fine
+        log_matrix = 0_RKIND
+      end where
+
+      scaled_by_string = ''
+      scaled_matrix = cmatrix
+      complex_format = 'ES8.1'
+      if( maxval(log_matrix) - minval(log_matrix) < 4 ) then
+        complex_format = 'F6.1'
+        scaled_matrix = cmatrix / REAL(10.0**floor(minval(log_matrix),RKIND),RKIND)
+        write(scaled_by_string,'(a,sp,i2,a)') ' (scaled by x10^',-1*floor(minval(log_matrix)),')'
+      end if
+
+      write(row_format,'(a,i3.3,a,a,a,a,a)') '(a,',size(cmatrix,2),&
+            '(1x,ss,',trim(complex_format),',1x,sp,',trim(complex_format),',"i",4x))'
+
+      write(*,'(a,a,a)') trim(msg_priority%initial_msg)//spaces, main_msg, trim(scaled_by_string)
+
+      do i =1,size(cmatrix,1)
+        write(*,row_format) trim(msg_priority%initial_msg)//spaces, scaled_matrix(i,:)
+      end do
+
+    end if
+
+  end subroutine print_scaled_cmatrix
+
+  !---------------------------------------------------------------------
+  ! prototype print_decimal_cmatrix()
+  !---------------------------------------------------------------------
+
+  subroutine print_decimal_cmatrix ( msg_priority, msg_tag, main_msg, cmatrix )
+
+    type (msg_priorities), intent(in) :: msg_priority
+    type (msg_tags), intent(in) :: msg_tag
+    character(*), intent(in) :: main_msg
+    complex(CKIND), intent(in) :: cmatrix(:,:) 
+    complex(CKIND) :: scaled_matrix(size(cmatrix,1), size(cmatrix,2))       
+    character(50) :: row_format, complex_format, scaled_by_string
+    integer(IKIND) :: i
+    real(RKIND) ::  abs_matrix(size(cmatrix,1), 2 * size(cmatrix,2)), &
+                    log_matrix(size(cmatrix,1), 2 * size(cmatrix,2))
+
+    if ( ( my_rank==0 .or. l_print_this_core ) &
+    .and. (msg_priority%state .or. msg_tag%state) ) then
+
+      abs_matrix(1:size(cmatrix,1), 1:size(cmatrix,2)) = abs(realpart(cmatrix))
+      abs_matrix(1:size(cmatrix,1),size(cmatrix,2)+1:size(cmatrix,2)*2) = abs(imagpart(cmatrix))
+      log_matrix = log10(abs_matrix)
+      where ( abs_matrix < tiny ) !?? JR using RKIND for CKIND should be fine
+        log_matrix = 0_RKIND
+      end where
+
+      scaled_by_string = ''
+      scaled_matrix = cmatrix
+      complex_format = 'ES8.1'
+      if( maxval(log_matrix) - minval(log_matrix) < 4 .and. maxval(abs(log_matrix)) < 4 ) then
+        write(complex_format, '(a,i1)') 'F7.', max(-1*floor(minval(log_matrix)),1)
+      end if
+
+      write(row_format,'(a,i3.3,a,a,a,a,a)') '(a,',size(cmatrix,2),&
+            '(1x,ss,',trim(complex_format),',1x,sp,',trim(complex_format),',"i",4x))'
+
+      write(*,'(a,a)') trim(msg_priority%initial_msg)//spaces, main_msg
+
+      do i =1,size(cmatrix,1)
+        write(*,row_format) trim(msg_priority%initial_msg)//spaces, scaled_matrix(i,:)
+      end do
+
+    end if
+
+  end subroutine print_decimal_cmatrix
+
+  !---------------------------------------------------------------------
+  ! prototype print_scaled_cmatrix2()
+  !---------------------------------------------------------------------
+  ! same as print_scaled_cmatrix, but scales to print to 2 decimal places
+
+  subroutine print_scaled_cmatrix2 ( msg_priority, msg_tag, main_msg, cmatrix )
+
+    type (msg_priorities), intent(in) :: msg_priority
+    type (msg_tags), intent(in) :: msg_tag
+    character(*), intent(in) :: main_msg
+    complex(CKIND), intent(in) :: cmatrix(:,:) 
+    complex(CKIND) :: scaled_matrix(size(cmatrix,1), size(cmatrix,2))       
+    character(50) :: row_format, complex_format, scaled_by_string
+    integer(IKIND) :: i
+    real(RKIND) ::  abs_matrix(size(cmatrix,1), 2 * size(cmatrix,2)), &
+                    log_matrix(size(cmatrix,1), 2 * size(cmatrix,2))
+
+    if ( ( my_rank==0 .or. l_print_this_core ) &
+    .and. (msg_priority%state .or. msg_tag%state) ) then
+
+      abs_matrix(1:size(cmatrix,1), 1:size(cmatrix,2)) = abs(realpart(cmatrix))
+      abs_matrix(1:size(cmatrix,1),size(cmatrix,2)+1:size(cmatrix,2)*2) = abs(imagpart(cmatrix))
+      log_matrix = log10(abs_matrix)
+      where ( abs_matrix < tiny ) !?? JR using RKIND for CKIND should be fine
+        log_matrix = 0_RKIND
+      end where
+
+      scaled_by_string = ''
+      scaled_matrix = cmatrix
+      complex_format = 'ES8.1'
+      if( maxval(log_matrix) - minval(log_matrix) < 4 ) then
+        complex_format = 'F6.2'
+        log_matrix = log_matrix + 2 !?? temporary fudge
+        scaled_matrix = cmatrix / REAL(10.0**floor(minval(log_matrix),RKIND),RKIND)
+        write(scaled_by_string,'(a,sp,i2,a)') ' (scaled by x10^',-1*floor(minval(log_matrix)),')'
+      end if
+
+      write(row_format,'(a,i3.3,a,a,a,a,a)') '(a,',size(cmatrix,2),&
+            '(1x,ss,',trim(complex_format),',1x,sp,',trim(complex_format),',"i",4x))'
+
+      write(*,'(a,a,a)') trim(msg_priority%initial_msg)//spaces, main_msg, trim(scaled_by_string)
+
+      do i =1,size(cmatrix,1)
+        write(*,row_format) trim(msg_priority%initial_msg)//spaces, scaled_matrix(i,:)
+      end do
+
+    end if
+
+  end subroutine print_scaled_cmatrix2
 
   !---------------------------------------------------------------------
   ! main real/complex/integer vector printing - used by matrix and scalar printing

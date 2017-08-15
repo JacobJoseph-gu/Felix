@@ -191,7 +191,7 @@ MODULE IPara
   !Refinement FLAGS
   INTEGER(IKIND) :: IImageOutputFLAG
   !LACBED
-  INTEGER(IKIND),DIMENSION(:,:), ALLOCATABLE :: ILACBEDStrongBeamList, IPixelLocation, ISymmetryRelations
+  INTEGER(IKIND),DIMENSION(:,:), ALLOCATABLE :: IPixelLocation, ISymmetryRelations
   INTEGER(IKIND),DIMENSION(:), ALLOCATABLE :: InBeams,IOutputReflections,IEquivalentUgKey
   !LACBED mask
   INTEGER(IKIND),DIMENSION(:,:), ALLOCATABLE :: IMask

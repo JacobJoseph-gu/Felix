@@ -156,8 +156,6 @@ PROGRAM Felixrefine
     CALL message(LS,"Simulation only")
   END IF
 
-  CALL message("RImageExpi(1:10,1:10,1)=",RImageExpi(1:10,1:10,1))
-
   !--------------------------------------------------------------------
   ! set up scattering factors, relativistic electrons, reciprocal lattice
   !--------------------------------------------------------------------
@@ -498,6 +496,23 @@ PROGRAM Felixrefine
   CALL Absorption (IErr)
   IF(l_alert(IErr,"felixrefine","Absorption()")) CALL abort()
   CALL print_end_time( LM, IStartTime2, "Absorption" )
+
+  CALL message(LM,"CUgMat snippet1 via message() :",CUgMat(1:5,1:5))
+  CALL print_scaled_cmatrix(LM,no_tag,"CUgMat snippet1 via print_scaled_cmatrix() :",CUgMat(1:5,1:5))
+
+  CALL message(LM,"CUgMat*100 snippet1 via message() :",CUgMat(1:5,1:5)*100)
+  CALL print_scaled_cmatrix(LM,no_tag,"CUgMat snippet1 via print_scaled_cmatrix() :",CUgMat(1:5,1:5)*100)
+  CALL print_scaled_cmatrix2 (LM,no_tag,"CUgMat*100 snippet1 via print_scaled_cmatrix2() :",CUgMat(1:5,1:5)*100)
+
+  CALL message(LM,"CUgMat snippet2 via message() :",CUgMat(20:25,20:25))
+  CALL print_scaled_cmatrix(LM,no_tag,"CUgMat snippet2 via print_scaled_cmatrix() :",CUgMat(20:25,20:25))
+
+  CALL message(LM,"CUgMat snippet1 via message() :",CUgMat(1:5,1:5))
+  CALL print_decimal_cmatrix(LM,no_tag,"CUgMat snippet1 via print_decimal_cmatrix() :",CUgMat(1:5,1:5))
+  CALL message(LM,"CUgMat*100 snippet1 via message() :",CUgMat(1:5,1:5)*100)
+  CALL print_decimal_cmatrix(LM,no_tag,"CUgMat*100 snippet1 via print_decimal_cmatrix() :",CUgMat(1:5,1:5)*100)
+  CALL message(LM,"CUgMat*100000 snippet1 via message() :",CUgMat(1:5,1:5)*100000)
+  CALL print_decimal_cmatrix(LM,no_tag,"CUgMat*100000 snippet1 via print_decimal_cmatrix() :",CUgMat(1:5,1:5)*100000)
 
   !--------------------------------------------------------------------
   ! INoOfVariables calculated depending upon Ug and non-Ug refinement
