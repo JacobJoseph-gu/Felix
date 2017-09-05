@@ -5,6 +5,7 @@ dependencies:
   pre:
     - sudo apt-get update
     - sudo apt-get install libcr-dev mpich2 mpich2-doc
+    - sudo apt-get install libfftw3-dev libfftw3-doc
     
 checkout:
   post:
