@@ -19,6 +19,9 @@ compile:
     - make clean; make
 
 test:
-  post:
+  pre:
     - cd ../samples/GaAs_short
-    - ./felix
+    - ../../felix-$CIRCLE_SHA1/felix.INT64NGNU
+    - 
+    - cd ../samples/SrTiO3_short
+    - ../../felix-$CIRCLE_SHA1/felix.INT64NGNU
