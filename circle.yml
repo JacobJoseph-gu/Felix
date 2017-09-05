@@ -1,6 +1,11 @@
 general:
   build_dir: src
-  
+
+dependencies:
+  pre:
+    - sudo apt-get update
+    - sudo apt-get install libcr-dev mpich2 mpich2-doc
+    
 checkout:
   post:
     - echo $CIRCLE_SHA1 $CIRCLE_BRANCH $CIRCLE_BUILD_NUM $CIRCLE_USERNAME
