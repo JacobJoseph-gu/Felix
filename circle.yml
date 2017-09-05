@@ -21,7 +21,7 @@ compile:
 test:
   pre:
     - cd ../samples/GaAs_short
-    - ../../felix-$CIRCLE_SHA1/felix.INT64NGNU
+    - ../../felix-$CIRCLE_SHA1/felix.INT64NGNU.d
     - 
     - cd ../samples/SrTiO3_short
-    - ../../felix-$CIRCLE_SHA1/felix.INT64NGNU
+    - ../../felix-$CIRCLE_SHA1/felix.INT64NGNU.d
