@@ -1,45 +1,54 @@
 
 MODULE test_koch_mod
 
-IMPLICIT NONE
+! equation 19
+! A useful expansion of the exponential of the sum of two non-commuting matrices, one of which is diagonal
+! By - Christoph T Koch and John C H Spence
+! J. Phys. A: Math. Gen. 36 (2003) 803–816
 
+! Dcoeff from equation 18
+
+! bprime(0:u) are the unique B(l(0:q)), and there is a degeneracy d(k) for each bprime
+! (bprime(k) unique -> d(k) = 0)
+! bprime(k) used instead of bprime(l(k))
+
+IMPLICIT NONE
 CONTAINS
 
+  ! S_n,m = e ** ( lambda ( A + B ) )
+  ! where A, B matrices, B diagonal, lambda a scalar
 
-
-  SUBROUTINE CalculateElementS ()
-
-    ! equation 19
+  SUBROUTINE CalculateElementS ( lambda, A, Bmatrix, nnd, mnd, max_q, S )
 
     ! INPUTS
-    INTEGER(1),PARAMETER :: N = 3,& !?? this will instead be inferred from A or B
-                            max_q = 9, nnd = 1, mnd = 1
-    REAL(8) :: Bmatrix(N,N), A(N,N), lambda
-
+    INTEGER(4),INTENT(IN) :: nnd, mnd, max_q
+    REAL(8),INTENT(IN) :: lambda, Bmatrix(:,:), A(:,:)
+    ! OUTPUTS
+    REAL(8),INTENT(OUT) :: S
     ! local variables
-    REAL(8) :: Ccoeff, S, sumproduct, B(N)
-    INTEGER(4) :: ind,& ! generic looping index
-                  q,& ! q summation
-                  l(0:max_q) ! l index array
+    REAL(8) :: Ccoeff, B(SIZE(A,1)),&
+               sumproduct ! to store an iterative product
+    INTEGER(4) :: ind,& ! a generic looping index
+                  q, N, l(0:max_q)
     CHARACTER(50) :: formatting ! for writing terminal output
 
-    ! inputs
-    lambda = 0.001
-    Bmatrix = 0
-    Bmatrix(1,1) = 5; Bmatrix(2,2) = 6; Bmatrix(3,3) = 7
-    A = 1
-    A(2,1) = 2
-    A(3,3) = 3
+    IF(.NOT.(SIZE(A,1).EQ.SIZE(A,2).AND.SIZE(Bmatrix,1).EQ.SIZE(Bmatrix,2)&
+          .AND.SIZE(A,1).EQ.SIZE(Bmatrix,1))) RETURN
 
+    N = SIZE(A,1)
+
+    ! PRINT A, B, lambda, 
+    WRITE(*,'(a,i3,a,i3,a,F6.3)') " n = ", nnd, "     m = ", mnd, "    lamda = ", lambda 
     DO ind = 1,N
       IF(ind.EQ.1) THEN
-        WRITE(formatting,'(a,i0,a,i0,a)') "(a,", N, "(F4.2,1x),a,", N, "(F4.2,1x),a,i3,a,i3)"
-        WRITE(*,formatting) " A = [ ", A(:,ind), "] B = [ ", Bmatrix(:,ind), "]    n = ", nnd, "     m = ", mnd 
+        WRITE(formatting,'(a,i0,a,i0,a)') "(a,", N, "(F6.3,1x),a,", N, "(F6.3,1x),a)"
+        WRITE(*,formatting) " A = [ ", A(:,ind), "]    B = [ ", Bmatrix(:,ind), "]"
       ELSE 
-        WRITE(formatting,'(a,i0,a,i0,a)') "(a,", N, "(F4.2,1x),a,", N, "(F4.2,1x),a)"
-        WRITE(*,formatting) "     [ ", A(:,ind), "]     [ ", Bmatrix(:,ind), "]"
+        WRITE(formatting,'(a,i0,a,i0,a)') "(a,", N, "(F6.3,1x),a,", N, "(F6.3,1x),a)"
+        WRITE(*,formatting) "     [ ", A(:,ind), "]        [ ", Bmatrix(:,ind), "]"
       END IF 
     END DO
+    WRITE(*,*) '-------------------------------------------------------------'
 
     ! use single dim N array for B instead of N x N diagonal matrix
     DO ind = 1,N
@@ -49,7 +58,6 @@ CONTAINS
 
     ! + e ** ( lambda b_n ) * delta_n,m 
     IF(nnd.EQ.mnd) S = S + EXP(lambda*B(nnd))
-
 
     ! ------------------------------------
     ! summation over q
@@ -281,7 +289,7 @@ CONTAINS
       Dcoeff = 1
       RETURN
     END IF
-    !?? both this and embedded sum assumed to have value = 1 for null case
+    ! NB assumed that both this and embedded sum should have value = 1 for null case
 
     ! -----------------------------------------------------------
     ! large loop for r_1, ..., r_(d_k - j') summation & product
@@ -292,7 +300,7 @@ CONTAINS
   ! ---------------------------------------------------------------------------------        
     IF((d(k) - jprime).GT.0) THEN
 
-      !?? this always seems to lead to INoOfPermittedr.GT.0
+      ! NB this always seems to lead to INoOfPermittedr.GT.0
 
       ! find permitted r values (this list will not contain duplicate r values)
       permitted_r_values = -1
@@ -309,7 +317,6 @@ CONTAINS
           permitted_r_values(INoOfPermittedr) = ind
         END IF
       END DO
-      !?? cleverer way to do this using previous calculations, e.g. (q-1 - d(k)), u
 
       !IF(ALL(l(0:q).EQ.[1,3,2,2]).AND.k.EQ.2.AND.jprime.EQ.0) THEN
         !WRITE(*,*) 'permitted_r_values', permitted_r_values
@@ -330,7 +337,6 @@ CONTAINS
         !WRITE(formatting,'(a,i0,a,i0,a)') '(a,', u+1, '(F5.2,1x)",",', u+1, '(i4,1x))'
         !WRITE(*,formatting) 'bprime(0:u), d(0:u)', bprime(0:u), d(0:u)
 
-
         rsum = 0
         IF((d(k) - jprime).EQ.1) THEN
           DO ind = 1,INoOfPermittedr
@@ -349,7 +355,7 @@ CONTAINS
           DO WHILE (NotFinished)
 
             !IF(ALL(l(0:q).EQ.[1,3,2,2]).AND.k.EQ.2.AND.jprime.EQ.0) THEN
-              !WRITE(*,*) 'r', r, '||| all permitted ', permitted_r_values(1:INoOfPermittedr), '||| r ref ', r_permitted_referance
+            !  WRITE(*,*) 'r', r, '||| all permitted ', permitted_r_values(1:INoOfPermittedr), '||| r ref ', r_permitted_referance
             !END iF
             !WRITE(*,*) 'NotFinished',NotFinished
             !WRITE(*,*) 'r stuff', r, '|||', permitted_r_values(INoOfPermittedr), '|||', r_permitted_referance
@@ -399,10 +405,7 @@ CONTAINS
     END IF
   ! ---------------------------------------------------------------------------------        
   ! ---------------------------------------------------------------------------------        
-  ! ---------------------------------------------------------------------------------
-
-    ! this never seems to happen
-    IF(INoOfPermittedr.EQ.0.AND.(d(k) - jprime).GT.0) WRITE(*,*) 'Dcoeff (INoOfPermittedr.EQ.0.AND.(d(k) - jprime).GT.0) ', Dcoeff         
+  ! ---------------------------------------------------------------------------------         
 
   END SUBROUTINE
 
@@ -427,6 +430,9 @@ END MODULE
 ! impliment current debugging procedure
 ! impliment into felix
 ! HUGE PERFORMANCE IMPROVEMENTS
+! max_q dynamical error handling
+! impliment cleverer way to do permitted values using previous calculations, e.g. (q-1 - d(k)), u
+! could impliment checking B diagonal, currently ignoring non-diagonal elements
 
 ! gfortran -o test_koch_mod test.f90 test_koch_mod.f90 -fbounds-check
 ! doing clever permutation stuff for non-unique multiplication
